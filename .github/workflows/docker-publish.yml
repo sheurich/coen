@@ -64,3 +64,13 @@ jobs:
             images+="${tag}@${DIGEST} "
           done
           cosign sign --yes ${images}
+
+      - name: Verify the image
+        env:
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+          IMAGE: ghcr.io/${{ github.repository }}
+        run: |
+          cosign verify ${IMAGE}@${DIGEST} \
+            --certificate-identity https://github.com/sheurich/coen/.github/workflows/docker-publish.yml@refs/heads/main \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com |
+          jq
