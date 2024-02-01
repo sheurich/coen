@@ -18,6 +18,7 @@ jobs:
       run: make build
 
     - name: Run a Docker container to build the COEN ISO image
+      shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
       run: make run
 
     - name: Copy the resultant COEN ISO image from the Docker container into the host directory
