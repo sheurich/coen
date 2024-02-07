@@ -1,0 +1,12 @@
+{
+  "customizations": {},
+  "features": {},
+  "image": "mcr.microsoft.com/devcontainers/base:bookworm",
+  "name": "COEN Development Container",
+  "onCreateCommand": ".devcontainer/setup.sh",
+  "privileged": true,
+  "remoteUser": "root",
+  "runArgs": [
+    "--platform=linux/amd64"
+  ]
+}
