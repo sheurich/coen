@@ -2,9 +2,9 @@ name: Makefile CI
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "master" ]
+    branches: ["main"]
 
 jobs:
   build:
@@ -23,3 +23,10 @@ jobs:
 
     - name: Copy the resultant COEN ISO image from the Docker container into the host directory
       run: make copy
+
+    - name: Store Output
+      uses: actions/upload-artifact@v4
+      with:
+        name: 'COEN ISO'
+        overwrite: true
+        path: coen.iso
