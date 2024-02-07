@@ -3,9 +3,9 @@ name: ci
 on:
   push:
     branches:
-      - "main"
+    - "main"
     tags:
-      - 'v*'
+    - 'v*'
 
 jobs:
   build-image:
@@ -18,59 +18,59 @@ jobs:
 
     name: build-image
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
 
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
+    - name: Install Cosign
+      uses: sigstore/cosign-installer@v3
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
-      - id: docker_meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
+    - id: docker_meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ghcr.io/${{ github.repository }}
 
-      - name: Build and Push container images
-        uses: docker/build-push-action@v5
-        id: build-and-push
-        with:
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          context: .
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.docker_meta.outputs.tags }}
+    - name: Build and Push container images
+      uses: docker/build-push-action@v5
+      id: build-and-push
+      with:
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        context: .
+        platforms: linux/amd64
+        push: true
+        tags: ${{ steps.docker_meta.outputs.tags }}
 
-      - name: Sign the images with GitHub OIDC Token
-        env:
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
-          TAGS: ${{ steps.docker_meta.outputs.tags }}
-        run: |
-          images=""
-          for tag in ${TAGS}; do
-            images+="${tag}@${DIGEST} "
-          done
-          cosign sign --yes ${images}
+    - name: Sign the images with GitHub OIDC Token
+      env:
+        DIGEST: ${{ steps.build-and-push.outputs.digest }}
+        TAGS: ${{ steps.docker_meta.outputs.tags }}
+      run: |
+        images=""
+        for tag in ${TAGS}; do
+          images+="${tag}@${DIGEST} "
+        done
+        cosign sign --yes ${images}
 
-      - name: Verify the image
-        env:
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
-          IMAGE: ghcr.io/${{ github.repository }}
-        run: |
-          cosign verify ${IMAGE}@${DIGEST} \
-            --certificate-identity https://github.com/sheurich/coen/.github/workflows/docker-publish.yml@refs/heads/main \
-            --certificate-oidc-issuer https://token.actions.githubusercontent.com |
-          jq
+    - name: Verify the image
+      env:
+        DIGEST: ${{ steps.build-and-push.outputs.digest }}
+        IMAGE: ghcr.io/${{ github.repository }}
+      run: |
+        cosign verify ${IMAGE}@${DIGEST} \
+          --certificate-identity https://github.com/sheurich/coen/.github/workflows/docker-publish.yml@refs/heads/main \
+          --certificate-oidc-issuer https://token.actions.githubusercontent.com |
+        jq
