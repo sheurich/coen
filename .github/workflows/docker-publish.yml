@@ -46,7 +46,7 @@ jobs:
     - name: Determine SOURCE_DATE_EPOCH
       id: source_date_epoch
       run: |
-        echo "::set-output name=source_date_epoch::$(git show -s --format=%ct $GITHUB_SHA)"
+        echo "{source_date_epoch}={$(git show -s --format=%ct $GITHUB_SHA)}" >> $GITHUB_OUTPUT
 
     - name: Build and Push container images
       uses: docker/build-push-action@v5
