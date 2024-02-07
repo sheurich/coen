@@ -46,14 +46,14 @@ jobs:
     - name: Determine SOURCE_DATE_EPOCH
       id: source_date_epoch
       run: |
-        echo "{source_date_epoch}={$(git show -s --format=%ct $GITHUB_SHA)}" >> $GITHUB_OUTPUT
+        echo "SOURCE_DATE_EPOCH=$(git show -s --format=%ct $GITHUB_SHA)" >> $GITHUB_OUTPUT
 
     - name: Build and Push container images
       uses: docker/build-push-action@v5
       id: build-and-push
       with:
         build-args: |
-          SOURCE_DATE_EPOCH=${{ steps.source_date_epoch.outputs.source_date_epoch }}
+          SOURCE_DATE_EPOCH=${{ steps.source_date_epoch.outputs.SOURCE_DATE_EPOCH }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
         context: .
