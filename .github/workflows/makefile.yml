@@ -1,32 +1,28 @@
 name: Makefile CI
 
 on:
-  push:
-    branches: ["main"]
-  pull_request:
-    branches: ["main"]
+  workflow_dispatch:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Build a Docker container image using the Dockerfile
-      run: make build
+      - name: Build a Docker container image using the Dockerfile
+        run: make build
 
-    - name: Run a Docker container to build the COEN ISO image
-      shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
-      run: make run
+      - name: Run a Docker container to build the COEN ISO image
+        shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
+        run: make run
 
-    - name: Copy the resultant COEN ISO image from the Docker container into the host directory
-      run: make copy
+      - name: Copy the resultant COEN ISO image from the Docker container into the host directory
+        run: make copy
 
-    - name: Store Output
-      uses: actions/upload-artifact@v4
-      with:
-        name: 'COEN ISO'
-        overwrite: true
-        path: coen-*.iso
+      - name: Store Output
+        uses: actions/upload-artifact@v4
+        with:
+          name: "COEN ISO"
+          overwrite: true
+          path: coen-*.iso
