@@ -1,12 +1,43 @@
 {
-  "customizations": {},
-  "features": {},
-  "image": "mcr.microsoft.com/devcontainers/base:bookworm",
+  // COEN Development Container
+  // Note: Requires privileged mode and root user for ISO building operations
+  // (mounting, chroot, device nodes, squashfs creation)
+
   "name": "COEN Development Container",
+  "image": "mcr.microsoft.com/devcontainers/base:bookworm",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-docker",
+        "timonwong.shellcheck",
+        "foxundermoon.shell-format"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
   "onCreateCommand": ".devcontainer/setup.sh",
+
+  // Required for ISO building (mounting, chroot, device nodes)
   "privileged": true,
+
+  // Required for ISO building operations
   "remoteUser": "root",
+
   "runArgs": [
     "--platform=linux/amd64"
+  ],
+
+  "mounts": [
+    // Cache apt packages between rebuilds
+    "source=coen-apt-cache,target=/var/cache/apt,type=volume"
   ]
 }

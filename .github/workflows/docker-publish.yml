@@ -50,7 +50,7 @@ jobs:
           echo "SOURCE_DATE_EPOCH=$(git show -s --format=%ct $GITHUB_SHA)" >> $GITHUB_OUTPUT
 
       - name: Build and Push container images
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         id: build-and-push
         with:
           build-args: |
@@ -79,6 +79,6 @@ jobs:
           IMAGE: ghcr.io/${{ github.repository }}
         run: |
           cosign verify ${IMAGE}@${DIGEST} \
-            --certificate-identity https://github.com/sheurich/coen/.github/workflows/docker-publish.yml@refs/heads/main \
+            --certificate-identity-regexp 'https://github\.com/sheurich/coen/\.github/workflows/docker-publish\.yml@refs/(heads/main|tags/v.*)' \
             --certificate-oidc-issuer https://token.actions.githubusercontent.com |
           jq

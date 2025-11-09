@@ -1,0 +1,33 @@
+# Git files
+.git/
+.gitignore
+.gitattributes
+
+# GitHub files
+.github/
+
+# DevContainer files
+.devcontainer/
+
+# Build artifacts
+*.iso
+*.log
+*.tmp
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation (not needed for build)
+*.md
+!README.md
+
+# CI/CD artifacts
+SHA256SUMS.sig

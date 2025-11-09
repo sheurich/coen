@@ -1,6 +1,12 @@
 name: Makefile CI
 
 on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+    branches:
+      - "main"
   workflow_dispatch:
 
 jobs:
@@ -14,15 +20,29 @@ jobs:
         run: make build
 
       - name: Run a Docker container to build the COEN ISO image
-        shell: 'script -q -e -c "bash --noprofile --norc -eo pipefail {0}"'
         run: make run
 
       - name: Copy the resultant COEN ISO image from the Docker container into the host directory
         run: make copy
+
+      - name: Verify ISO hash
+        run: |
+          echo "Verifying ISO hash against SHA256SUMS..."
+          if sha256sum -c SHA256SUMS --ignore-missing; then
+            echo "✓ ISO hash verification passed"
+          else
+            echo "✗ ISO hash verification failed"
+            echo "Expected hash from SHA256SUMS:"
+            grep "coen-.*\.iso" SHA256SUMS || echo "No ISO hash found in SHA256SUMS"
+            echo "Actual hash:"
+            sha256sum coen-*.iso || echo "No ISO file found"
+            exit 1
+          fi
 
       - name: Store Output
         uses: actions/upload-artifact@v4
         with:
           name: "COEN ISO"
           overwrite: true
+          retention-days: 7
           path: coen-*.iso
