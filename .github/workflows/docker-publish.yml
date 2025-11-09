@@ -16,6 +16,7 @@ jobs:
       contents: read
       packages: write
       id-token: write # needed for signing the images with GitHub OIDC Token
+      security-events: write # needed for uploading Trivy SARIF results
 
     name: build-image
     steps:
