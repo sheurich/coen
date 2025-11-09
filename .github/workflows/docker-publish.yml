@@ -19,28 +19,28 @@ jobs:
 
     name: build-image
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           fetch-depth: 1
 
       - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
+        uses: sigstore/cosign-installer@dc72c7d5c4d10cd6bcb8cf6e3fd625a9e5e537da # v3.7.0
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@68827325e0b33c7199eb31dd4e31fbe9023e06e3 # v3.0.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@f95db51fddba0c2d1ec667646a06c2ce06100226 # v3.3.0
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.1.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - id: docker_meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
         with:
           images: ghcr.io/${{ github.repository }}
 
@@ -50,7 +50,7 @@ jobs:
           echo "SOURCE_DATE_EPOCH=$(git show -s --format=%ct $GITHUB_SHA)" >> $GITHUB_OUTPUT
 
       - name: Build and Push container images
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@5cd11c3a4ced054e52742c5fd54dca954e0edd85 # v6.5.0
         id: build-and-push
         with:
           build-args: |
@@ -61,6 +61,31 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ steps.docker_meta.outputs.tags }}
+          provenance: mode=max
+          sbom: true
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # 0.24.0
+        with:
+          image-ref: ghcr.io/${{ github.repository }}@${{ steps.build-and-push.outputs.digest }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@afb54ba388a7dca6ecae48f608c4ff05ff4cc77a # v3.25.15
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Generate SBOM with syft
+        uses: anchore/sbom-action@d94f46e13c6c62f59525ac9a1e147a99dc0b9bf5 # v0.17.0
+        with:
+          image: ghcr.io/${{ github.repository }}@${{ steps.build-and-push.outputs.digest }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+          upload-artifact: true
+          upload-release-assets: false
 
       - name: Sign the images with GitHub OIDC Token
         env:
@@ -72,6 +97,21 @@ jobs:
             images+="${tag}@${DIGEST} "
           done
           cosign sign --yes ${images}
+
+      - name: Sign SBOM with Cosign
+        run: |
+          cosign sign-blob --yes \
+            --bundle sbom-cosign.bundle \
+            sbom.spdx.json
+
+      - name: Upload SBOM bundle
+        uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # v4.3.1
+        with:
+          name: sbom-bundle
+          path: |
+            sbom.spdx.json
+            sbom-cosign.bundle
+          retention-days: 90
 
       - name: Verify the image
         env:
